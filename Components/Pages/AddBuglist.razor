@@ -1,0 +1,80 @@
+@page "/add-buglist"
+@using Microsoft.AspNetCore.Components.Forms
+@using System.IO
+
+<PageTitle>Add Buglist</PageTitle>
+
+<RadzenColumn SizeMD="12">
+    <RadzenAlert Shade="Shade.Lighter"
+                 Variant="Variant.Flat"
+                 Size="AlertSize.Small"
+                 AlertStyle="AlertStyle.Danger"
+                 Visible="@errorVisible">
+        Cannot save Buglist
+    </RadzenAlert>
+
+    <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.Buglist"
+                        Data="@buglist"
+                        Visible="@(buglist != null)"
+                        Submit="@FormSubmit">
+
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Testcase" Component="Testcaseid" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDownDataGrid Data="@testcasesForTestcaseid"
+                                        TextProperty="Screen"
+                                        ValueProperty="Id"
+                                        AllowClear="true"
+                                        Placeholder="Choose Testcase"
+                                        style="width:100%"
+                                        @bind-Value="buglist.Testcaseid"
+                                        Name="Testcaseid" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Remark" Component="Remark" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="width:100%"
+                               @bind-Value="buglist.Remark"
+                               Name="Remark" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Image" Component="Image" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <InputFile OnChange="@OnImageSelected" />
+
+                @if (!string.IsNullOrEmpty(imagePreview))
+                {
+                    <img src="@imagePreview" alt="Preview"
+                         style="max-width:200px; margin-top:10px; border:1px solid #ccc; border-radius:8px;" />
+                }
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center"
+                     JustifyContent="JustifyContent.End"
+                     Gap="0.5rem">
+                     
+            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit"
+                          Icon="save"
+                          Text="Save"
+                          Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                          Text="Cancel"
+                          Variant="Variant.Flat"
+                          Click="@CancelButtonClick" />
+        </RadzenStack>
+
+    </RadzenTemplateForm>
+</RadzenColumn>

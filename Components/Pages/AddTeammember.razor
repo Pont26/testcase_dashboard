@@ -1,0 +1,22 @@
+@page "/add-teammember"
+
+<PageTitle>Add Teammember</PageTitle>
+    <RadzenColumn SizeMD=12>
+        <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Teammember</RadzenAlert>
+        <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.Teammember" Data="@(teammember)" Visible="@(teammember != null && canEdit)" Submit="@FormSubmit">
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Name" Component="Name" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(teammember.Name)" Name="Name" />
+                    <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                </RadzenColumn>
+            </RadzenRow>
+          <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton ButtonStyle="Radzen.ButtonStyle.Success" ButtonType="ButtonType.Submit" Icon="bookmark_check" Text="Save" Variant="Variant.Flat" Size="Radzen.ButtonSize.Medium" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick"  />
+          </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+

@@ -1,0 +1,33 @@
+@page "/add-project-teammember"
+
+<PageTitle>Add ProjectTeammember</PageTitle>
+    <RadzenColumn SizeMD=12>
+        <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save ProjectTeammember</RadzenAlert>
+        <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.ProjectTeammember" Data="@(projectTeammember)" Visible="@(projectTeammember != null && canEdit)" Submit="@FormSubmit">
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Teammember" Component="Teammember" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenDropDownDataGrid Data="@(teammembersForTeammemberid)" TextProperty="Name" ValueProperty="Id" AllowClear=true
+                         Placeholder="Choose Teammember" style="display: block; width: 100%" @bind-Value="@(projectTeammember.Teammemberid)" Name="Teammemberid"
+                           />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Project" Component="Project" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenDropDownDataGrid Data="@(projectsForProjectid)" TextProperty="Projectname" ValueProperty="Id" AllowClear=true
+                         Placeholder="Choose Project" style="display: block; width: 100%" @bind-Value="@(projectTeammember.Projectid)" Name="Projectid"
+                           />
+                </RadzenColumn>
+            </RadzenRow>
+          <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save" Variant="Variant.Flat" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick"  />
+          </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+
