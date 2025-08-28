@@ -576,30 +576,28 @@ namespace TestCaseDashboard
         }
 
         partial void OnTeammembersRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.Teammember> items);
+public async Task<IEnumerable<TestCaseDashboard.Models.mydatabase.Teammember>> GetTeammembers(Query query = null)
+{
+    var items = Context.Teammembers.AsQueryable();
 
-        public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Teammember>> GetTeammembers(Query query = null)
+    if (query != null)
+    {
+        if (!string.IsNullOrEmpty(query.Expand))
         {
-            var items = Context.Teammembers.AsQueryable();
-
-
-            if (query != null)
+            var propertiesToExpand = query.Expand.Split(',');
+            foreach (var p in propertiesToExpand)
             {
-                if (!string.IsNullOrEmpty(query.Expand))
-                {
-                    var propertiesToExpand = query.Expand.Split(',');
-                    foreach(var p in propertiesToExpand)
-                    {
-                        items = items.Include(p.Trim());
-                    }
-                }
-
-                ApplyQuery(ref items, query);
+                items = items.Include(p.Trim());
             }
-
-            OnTeammembersRead(ref items);
-
-            return await Task.FromResult(items);
         }
+
+        // Apply any filters from the query object
+        ApplyQuery(ref items, query);
+    }
+
+    // Now, execute the query asynchronously and return the list.
+    return await items.ToListAsync();
+}
 
         partial void OnTeammemberGet(TestCaseDashboard.Models.mydatabase.Teammember item);
         partial void OnGetTeammemberById(ref IQueryable<TestCaseDashboard.Models.mydatabase.Teammember> items);
@@ -745,51 +743,46 @@ namespace TestCaseDashboard
         partial void OnTestcasesRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.Testcase> items);
 
         public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Testcase>> GetTestcases(Query query = null)
+{
+    // Include Project and TestcaseTeammembers with Teammember
+    var items = Context.Testcases
+                       .Include(t => t.Project)
+                       .Include(t => t.TestcaseTeammembers)
+                           .ThenInclude(tm => tm.Teammember)
+                       .AsQueryable();
+
+    if (query != null)
+    {
+        if (!string.IsNullOrEmpty(query.Expand))
         {
-            var items = Context.Testcases.AsQueryable();
-
-            items = items.Include(i => i.Project);
-
-            if (query != null)
+            var propertiesToExpand = query.Expand.Split(',');
+            foreach (var p in propertiesToExpand)
             {
-                if (!string.IsNullOrEmpty(query.Expand))
-                {
-                    var propertiesToExpand = query.Expand.Split(',');
-                    foreach(var p in propertiesToExpand)
-                    {
-                        items = items.Include(p.Trim());
-                    }
-                }
-
-                ApplyQuery(ref items, query);
+                items = items.Include(p.Trim());
             }
-
-            OnTestcasesRead(ref items);
-
-            return await Task.FromResult(items);
         }
+
+        ApplyQuery(ref items, query);
+    }
+
+    OnTestcasesRead(ref items);
+
+    return await Task.FromResult(items);
+}
 
         partial void OnTestcaseGet(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnGetTestcaseById(ref IQueryable<TestCaseDashboard.Models.mydatabase.Testcase> items);
 
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(Guid id)
-        {
-            var items = Context.Testcases
-                              .AsNoTracking()
-                              .Where(i => i.Id == id);
 
-            items = items.Include(i => i.Project);
- 
-            OnGetTestcaseById(ref items);
+public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(Guid id)
+{
+return await Context.Testcases
+    .Include(t => t.TestcaseTeammembers)
+        .ThenInclude(tm => tm.Teammember) // optional, for names etc.
+    .FirstOrDefaultAsync(t => t.Id == id);
 
-            var itemToReturn = items.FirstOrDefault();
-
-            OnTestcaseGet(itemToReturn);
-
-            return await Task.FromResult(itemToReturn);
-        }
-
+}
 
         partial void OnTestcaseCreated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseCreated(TestCaseDashboard.Models.mydatabase.Testcase item);
@@ -832,29 +825,39 @@ namespace TestCaseDashboard
         partial void OnTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Testcase> UpdateTestcase(Guid id, TestCaseDashboard.Models.mydatabase.Testcase testcase)
-        {
-            OnTestcaseUpdated(testcase);
+      // In your mydatabaseService.cs file
+public async Task<TestCaseDashboard.Models.mydatabase.Testcase > UpdateTestcase(Guid id, TestCaseDashboard.Models.mydatabase.Testcase  updatedTestcase)
+{
+    // 1. Get the existing, tracked Testcase entity from the database.
+    // The .Include is essential for this to work correctly.
+    var existingTestcase = await Context.Testcases
+        .Include(t => t.TestcaseTeammembers)
+        .FirstOrDefaultAsync(t => t.Id == id);
 
-            var itemToUpdate = Context.Testcases
-                              .Where(i => i.Id == testcase.Id)
-                              .FirstOrDefault();
+    if (existingTestcase == null)
+    {
+        throw new Exception("Testcase not found");
+    }
 
-            if (itemToUpdate == null)
-            {
-               throw new Exception("Item no longer available");
-            }
-                
-            var entryToUpdate = Context.Entry(itemToUpdate);
-            entryToUpdate.CurrentValues.SetValues(testcase);
-            entryToUpdate.State = EntityState.Modified;
+    // 2. Update the main Testcase properties from the updated object.
+    // This is more robust than manual assignment.
+    Context.Entry(existingTestcase).CurrentValues.SetValues(updatedTestcase);
+    
+    // 3. Clear the old collection and add the new one.
+    // This correctly marks the old members for deletion and new members for addition.
+    existingTestcase.TestcaseTeammembers.Clear();
+    
+    foreach(var newMember in updatedTestcase.TestcaseTeammembers)
+    {
+        existingTestcase.TestcaseTeammembers.Add(newMember);
+    }
+    
+    // 4. Save the changes to the database.
+    await Context.SaveChangesAsync();
 
-            Context.SaveChanges();
+    return existingTestcase;
+}
 
-            OnAfterTestcaseUpdated(testcase);
-
-            return testcase;
-        }
 
         partial void OnTestcaseDeleted(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseDeleted(TestCaseDashboard.Models.mydatabase.Testcase item);

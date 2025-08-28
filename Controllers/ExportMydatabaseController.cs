@@ -61,27 +61,9 @@ namespace TestCaseDashboard.Controllers
             return ToExcel(ApplyQuery(await service.GetProjectTeammembers(), Request.Query, false), fileName);
         }
 
-        [HttpGet("/export/mydatabase/teammembers/csv")]
-        [HttpGet("/export/mydatabase/teammembers/csv(fileName='{fileName}')")]
-        public async Task<FileStreamResult> ExportTeammembersToCSV(string fileName = null)
-        {
-            return ToCSV(ApplyQuery(await service.GetTeammembers(), Request.Query, false), fileName);
-        }
+     
 
-        [HttpGet("/export/mydatabase/teammembers/excel")]
-        [HttpGet("/export/mydatabase/teammembers/excel(fileName='{fileName}')")]
-        public async Task<FileStreamResult> ExportTeammembersToExcel(string fileName = null)
-        {
-            return ToExcel(ApplyQuery(await service.GetTeammembers(), Request.Query, false), fileName);
-        }
-
-        [HttpGet("/export/mydatabase/testcases/csv")]
-        [HttpGet("/export/mydatabase/testcases/csv(fileName='{fileName}')")]
-        public async Task<FileStreamResult> ExportTestcasesToCSV(string fileName = null)
-        {
-            return ToCSV(ApplyQuery(await service.GetTestcases(), Request.Query, false), fileName);
-        }
-
+  
         [HttpGet("/export/mydatabase/testcases/excel")]
         [HttpGet("/export/mydatabase/testcases/excel(fileName='{fileName}')")]
         public async Task<FileStreamResult> ExportTestcasesToExcel(string fileName = null)

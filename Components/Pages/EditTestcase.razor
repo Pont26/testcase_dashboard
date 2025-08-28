@@ -1,73 +1,107 @@
-@page "/edit-testcase"
+@page "/edit-testcase/{Id:guid}"
+@inherits EditTestcaseBase
+
+@using TestCaseDashboard.Models.mydatabase
+@using TestCaseDashboard.Models.mydatabase
+@using TestCaseDashboard.Models.mydatabase
+@using System.Collections.Generic
+@using Radzen.Blazor
+@using Radzen
 
 <PageTitle>Edit Testcase</PageTitle>
-<RadzenRow>
-    <RadzenColumn SizeMD="9">
-    <RadzenLabel style="font-weight: bold" Text="Item no longer available." Visible="@(!canEdit)" />
-    </RadzenColumn>
-    <RadzenColumn SizeMD="3">
-    <RadzenButton ButtonStyle="ButtonStyle.Secondary" style="margin-bottom: 20px" Text="Close" Visible="@(!canEdit)" Click="@CancelButtonClick" />
-    </RadzenColumn>
-</RadzenRow>
-<RadzenRow>
-    <RadzenColumn SizeMD="9">
-    <RadzenLabel style="font-weight: bold" Text="Another user has made conflicting changes to one or more of the fields you have modified. Please reload." Visible="@hasChanges" />
-    </RadzenColumn>
-    <RadzenColumn SizeMD="3">
-    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="autorenew" style="margin-bottom: 20px" Text="Reload" Visible="@hasChanges" Click="@ReloadButtonClick" />
-    </RadzenColumn>
-</RadzenRow>
 
-    <RadzenColumn SizeMD=12>
-        <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Testcase</RadzenAlert>
-        <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.Testcase" Data="@(testcase)" Visible="@(testcase != null && canEdit)" Submit="@FormSubmit">
-            <RadzenRow style="margin-bottom: 1rem">
-                <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Screen" Component="Screen" style="width: 100%" />
-                </RadzenColumn>
-                <RadzenColumn SizeMD="9">
-                    <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(testcase.Screen)" Name="Screen" />
-                    <RadzenRequiredValidator Component="Screen" Text="Screen is required" />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow style="margin-bottom: 1rem">
-                <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Function" Component="Function" style="width: 100%" />
-                </RadzenColumn>
-                <RadzenColumn SizeMD="9">
-                    <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(testcase.Function)" Name="Function" />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow style="margin-bottom: 1rem">
-                <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Project" Component="Project" style="width: 100%" />
-                </RadzenColumn>
-                <RadzenColumn SizeMD="9">
-                    <RadzenDropDownDataGrid Data="@(projectsForProjectid)" TextProperty="Projectname" ValueProperty="Id" AllowClear=true
-                         Placeholder="Choose Project" style="display: block; width: 100%" @bind-Value="@(testcase.Projectid)" Name="Projectid"
-                           />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow style="margin-bottom: 1rem">
-                <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Createdat" Component="Createdat" style="width: 100%" />
-                </RadzenColumn>
-                <RadzenColumn SizeMD="9">
-                    <RadzenDatePicker DateFormat="MM/dd/yyyy" style="display: block; width: 100%" @bind-Value="@(testcase.Createdat)" Name="Createdat" />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow style="margin-bottom: 1rem">
-                <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Updatedat" Component="Updatedat" style="width: 100%" />
-                </RadzenColumn>
-                <RadzenColumn SizeMD="9">
-                    <RadzenDatePicker DateFormat="MM/dd/yyyy" style="display: block; width: 100%" @bind-Value="@(testcase.Updatedat)" Name="Updatedat" />
-                </RadzenColumn>
-            </RadzenRow>
-          <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save" Variant="Variant.Flat" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick"  />
-          </RadzenStack>
-        </RadzenTemplateForm>
-    </RadzenColumn>
+<RadzenColumn SizeMD="12">
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">
+        Cannot save Testcase
+    </RadzenAlert>
 
+    @* Add a loading spinner/message to be displayed while data is being fetched *@
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <RadzenText Text="Loading..." />
+            <RadzenProgressBar Circular="true" Value="100" ShowValue="false" />
+        </div>
+    }
+
+    @* The form is now only rendered when isLoading is false, and testcase and canEdit are valid *@
+    <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.Testcase" Data="@(testcase)" Visible="@(!isLoading && testcase != null && canEdit)" Submit="@FormSubmit">
+        
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Screen" Component="Screen" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(testcase.Screen)" Name="Screen" />
+                <RadzenRequiredValidator Component="Screen" Text="Screen is required" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Function" Component="Function" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(testcase.Function)" Name="Function" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Project" Component="Project" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDownDataGrid Data="@(projectsForProjectid)" TextProperty="Projectname" ValueProperty="Id" AllowClear="true"
+                    Placeholder="Choose Project" style="display: block; width: 100%" @bind-Value="@(testcase.Projectid)" Name="Projectid" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom:1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Coder" Component="Coder" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="6">
+                <RadzenDropDown Data="@(teammembersForCoder)" TextProperty="Name" ValueProperty="Id"
+                                @bind-Value="selectedCoderId" AllowClear="true" Placeholder="Select Coder" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="3">
+                <RadzenDropDown Data="@(testStatusList)" TextProperty="Value" ValueProperty="Key"
+                                @bind-Value="selectedCoderStatus" AllowClear="true" Placeholder="Status" style="width:100%" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom:1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Tester" Component="Tester" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="6">
+                <RadzenDropDown Data="@(teammembersForCoder)" TextProperty="Name" ValueProperty="Id"
+                                @bind-Value="selectedTesterId" AllowClear="true" Placeholder="Select Tester" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="3">
+                <RadzenDropDown Data="@(testStatusList)" TextProperty="Value" ValueProperty="Key"
+                                @bind-Value="selectedTesterStatus" AllowClear="true" Placeholder="Status" style="width:100%" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow style="margin-bottom:1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Owner" Component="Owner" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="6">
+                <RadzenDropDown Data="@(teammembersForCoder)" TextProperty="Name" ValueProperty="Id"
+                                @bind-Value="selectedOwnerId" AllowClear="true" Placeholder="Select Owner" style="width:100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="3">
+                <RadzenDropDown Data="@(testStatusList)" TextProperty="Value" ValueProperty="Key"
+                                @bind-Value="selectedOwnerStatus" AllowClear="true" Placeholder="Status" style="width:100%" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+
+    </RadzenTemplateForm>
+</RadzenColumn>

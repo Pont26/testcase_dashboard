@@ -2,82 +2,138 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
-using Radzen.Blazor;
+using TestCaseDashboard.Models.mydatabase;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestCaseDashboard.Components.Pages
 {
-    public partial class EditTestcase
+    public class EditTestcaseBase : ComponentBase
     {
-        [Inject]
-        protected IJSRuntime JSRuntime { get; set; }
+        [Inject] protected DialogService DialogService { get; set; }
+        [Inject] public mydatabaseService mydatabaseService { get; set; }
 
-        [Inject]
-        protected NavigationManager NavigationManager { get; set; }
+        [Parameter] public Guid Id { get; set; }
 
-        [Inject]
-        protected DialogService DialogService { get; set; }
+        protected Testcase testcase;
+        protected IEnumerable<Project> projectsForProjectid;
+        protected IEnumerable<Teammember> teammembersForCoder;
+        protected IEnumerable<KeyValuePair<TestStatus, string>> testStatusList;
 
-        [Inject]
-        protected TooltipService TooltipService { get; set; }
+        protected Guid? selectedCoderId;
+        protected Guid? selectedTesterId;
+        protected Guid? selectedOwnerId;
 
-        [Inject]
-        protected ContextMenuService ContextMenuService { get; set; }
+        protected TestStatus? selectedCoderStatus;
+        protected TestStatus? selectedTesterStatus;
+        protected TestStatus? selectedOwnerStatus;
 
-        [Inject]
-        protected NotificationService NotificationService { get; set; }
-        [Inject]
-        public mydatabaseService mydatabaseService { get; set; }
-
-        [Parameter]
-        public Guid Id { get; set; }
+        protected bool errorVisible = false;
+        protected bool hasChanges = false;
+        protected bool canEdit = true;
+        protected bool isLoading = true; // Add this loading flag
 
         protected override async Task OnInitializedAsync()
         {
-            testcase = await mydatabaseService.GetTestcaseById(Id);
+            isLoading = true; // Start loading
+            try
+            {
+                // Fetch the testcase and its related team members, ensuring eager loading
+                testcase = await mydatabaseService.GetTestcaseById(Id);
 
-            projectsForProjectid = await mydatabaseService.GetProjects();
+                // Now, fetch data for dropdowns
+                projectsForProjectid = await mydatabaseService.GetProjects();
+                teammembersForCoder = await mydatabaseService.GetTeammembers();
+                testStatusList = Enum.GetValues(typeof(TestStatus))
+                                           .Cast<TestStatus>()
+                                           .Select(ts => new KeyValuePair<TestStatus, string>(ts, ts.ToString()))
+                                           .ToList();
+
+                if (testcase.TestcaseTeammembers == null)
+                    testcase.TestcaseTeammembers = new List<TestcaseTeammember>();
+
+                // Pre-fill dropdowns from existing data
+                var coder = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Coder);
+                selectedCoderId = coder?.Teammemberid;
+                selectedCoderStatus = coder?.TestStatus;
+
+                var tester = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Tester);
+                selectedTesterId = tester?.Teammemberid;
+                selectedTesterStatus = tester?.TestStatus;
+
+                var owner = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Owner);
+                selectedOwnerId = owner?.Teammemberid;
+                selectedOwnerStatus = owner?.TestStatus;
+            }
+            catch (Exception ex)
+            {
+                errorVisible = true;
+                // Log the exception for debugging purposes
+            }
+            finally
+            {
+                isLoading = false; // Stop loading, regardless of success or failure
+                StateHasChanged(); // Force the component to re-render
+            }
         }
-        protected bool errorVisible;
-        protected TestCaseDashboard.Models.mydatabase.Testcase testcase;
-
-        protected IEnumerable<TestCaseDashboard.Models.mydatabase.Project> projectsForProjectid;
 
         protected async Task FormSubmit()
         {
             try
             {
-                await mydatabaseService.UpdateTestcase(Id, testcase);
+                testcase.Updatedat = DateTime.UtcNow;
+
+                // Create a new list of team member associations based on selected values
+                testcase.TestcaseTeammembers = new List<TestcaseTeammember>();
+                if (selectedCoderId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedCoderId.Value,
+                        Role = Role.Coder,
+                        TestStatus = selectedCoderStatus ?? TestStatus.Pending
+                    });
+                }
+                if (selectedTesterId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedTesterId.Value,
+                        Role = Role.Tester,
+                        TestStatus = selectedTesterStatus ?? TestStatus.Pending
+                    });
+                }
+                if (selectedOwnerId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedOwnerId.Value,
+                        Role = Role.Owner,
+                        TestStatus = selectedOwnerStatus ?? TestStatus.Pending
+                    });
+                }
+                
+                await mydatabaseService.UpdateTestcase(testcase.Id, testcase);
+                
                 DialogService.Close(testcase);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                hasChanges = true;
+                canEdit = false;
+                errorVisible = true;
             }
             catch (Exception ex)
             {
-                hasChanges = ex is Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException;
-                canEdit = !(ex is Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException);
                 errorVisible = true;
             }
         }
 
-        protected async Task CancelButtonClick(MouseEventArgs args)
+        protected void CancelButtonClick(MouseEventArgs args)
         {
             DialogService.Close(null);
-        }
-
-
-        protected bool hasChanges = false;
-        protected bool canEdit = true;
-
-
-        protected async Task ReloadButtonClick(MouseEventArgs args)
-        {
-           mydatabaseService.Reset();
-            hasChanges = false;
-            canEdit = true;
-
-            testcase = await mydatabaseService.GetTestcaseById(Id);
         }
     }
 }
