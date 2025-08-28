@@ -18,11 +18,21 @@ namespace TestCaseDashboard.Models.mydatabase
         public Guid Teammemberid { get; set; }
 
         public Teammember Teammember { get; set; }
+        [Column("role")]
+        [Required]
+        public Role Role{get;set;}
+        
+        [Column("testStatus")]
+        [Required]
+        public TestStatus TestStatus{get;set;}
 
         [Column("testcaseid")]
         [Required]
         public Guid Testcaseid { get; set; }
 
         public Testcase Testcase { get; set; }
+
+        public ICollection<Buglist> Buglists { get; set; } = new List<Buglist>();
+
     }
 }

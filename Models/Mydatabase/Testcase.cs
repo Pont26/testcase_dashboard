@@ -23,10 +23,6 @@ namespace TestCaseDashboard.Models.mydatabase
         [Column("function")]
         public string? Function { get; set; }
 
-        [Column("teststatus")]
-        [Required]
-        public TestStatus TestStatus { get; set; }
-
         [Column("projectid")]
         [Required]
         public Guid Projectid { get; set; }
@@ -39,7 +35,6 @@ namespace TestCaseDashboard.Models.mydatabase
         [Column("updatedat")]
         public DateTime? Updatedat { get; set; }
 
-        public ICollection<Buglist> Buglists { get; set; } = new List<Buglist>();
         public ICollection<TestcaseTeammember> TestcaseTeammembers { get; set; } = new List<TestcaseTeammember>();
     }
 }

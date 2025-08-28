@@ -23,9 +23,9 @@ namespace TestCaseDashboard.Data
             base.OnModelCreating(builder);
 
             builder.Entity<TestCaseDashboard.Models.mydatabase.Buglist>()
-              .HasOne(i => i.Testcase)
+              .HasOne(i => i.TestcaseTeammember)
               .WithMany(i => i.Buglists)
-              .HasForeignKey(i => i.Testcaseid)
+              .HasForeignKey(i => i.TestcaseTeammemberid)
               .HasPrincipalKey(i => i.Id);
 
             builder.Entity<TestCaseDashboard.Models.mydatabase.ProjectTeammember>()

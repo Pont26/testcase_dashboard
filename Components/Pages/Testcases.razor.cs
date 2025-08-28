@@ -49,7 +49,8 @@ namespace TestCaseDashboard.Components.Pages
         }
         protected override async Task OnInitializedAsync()
         {
-            testcases = await mydatabaseService.GetTestcases(new Query { Filter = $@"i => i.Screen.Contains(@0) || i.Function.Contains(@0)", FilterParameters = new object[] { search }, Expand = "Project" });
+           testcases = await mydatabaseService.GetTestcases(new Query { Expand = "Project,TestcaseTeammembers" });
+
         }
 
         protected async Task AddButtonClick(MouseEventArgs args)

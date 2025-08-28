@@ -1,4 +1,5 @@
 @page "/testcases"
+@using TestCaseDashboard.Models.mydatabase
 
 <PageTitle>Testcases</PageTitle>
 <RadzenStack>
@@ -22,19 +23,114 @@
         <RadzenDataGrid @ref="grid0" ColumnWidth="200px"   AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[]{5, 10, 20, 30})
             Data="@(testcases)" TItem="TestCaseDashboard.Models.mydatabase.Testcase" RowSelect="@EditRow">
             <Columns>
+            <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Project.Projectname" Title="Project">
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Project.ProjectSource" Title="Project"></RadzenDataGridColumn>
+         
                 <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Screen" Title="Screen">
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Function" Title="Function">
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Project.Projectname" Title="Project"></RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.ProjectTeammember" Property="Teammember.Name" Title="Teammember"></RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Status" Title="Status">
-                </RadzenDataGridColumn>
-                
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Createdat" Title="Createdat">
+        
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Coder Name">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Coder && t.Teammember != null)
+                .Select(t => t.Teammember.Name))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Coding Testing">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Coder)
+                .Select(t => t.TestStatus.ToString()))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+
+
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Tester Name">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Tester && t.Teammember != null)
+                .Select(t => t.Teammember.Name))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Tester Testing">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Tester)
+                .Select(t => t.TestStatus.ToString()))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Project Owner Name">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Owner && t.Teammember != null)
+                .Select(t => t.Teammember.Name))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Title="Project Owner Testing">
+    <Template Context="data">
+        @if (data.TestcaseTeammembers != null && data.TestcaseTeammembers.Any())
+        {
+            @string.Join(", ", data.TestcaseTeammembers
+                .Where(t => t.Role == Role.Owner)
+                .Select(t => t.TestStatus.ToString()))
+        }
+        else
+        {
+            <span>-</span>
+        }
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Createdat" Title="Createdat">
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Property="Updatedat" Title="Updatedat">
                 </RadzenDataGridColumn>
+                
                 <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Testcase" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
                     <Template Context="testcase">
 

@@ -84,7 +84,7 @@ namespace TestCaseDashboard
         {
             var items = Context.Buglists.AsQueryable();
 
-            items = items.Include(i => i.Testcase);
+            items = items.Include(i => i.TestcaseTeammember);
 
             if (query != null)
             {
@@ -105,7 +105,7 @@ namespace TestCaseDashboard
             return await Task.FromResult(items);
         }
 
-        partial void OnBuglistGet(TestCaseDashboard.Models.mydatabase.Buglist item);
+       partial void OnBuglistGet(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnGetBuglistById(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
 
 
@@ -115,7 +115,7 @@ namespace TestCaseDashboard
                               .AsNoTracking()
                               .Where(i => i.Id == id);
 
-            items = items.Include(i => i.Testcase);
+            items = items.Include(i => i.TestcaseTeammember);
  
             OnGetBuglistById(ref items);
 
@@ -135,6 +135,14 @@ namespace TestCaseDashboard
 
     // The logic to check for an existing item is removed.
     // A 'Create' method should assume it's dealing with a new item.
+    OnBuglistCreated(buglist);
+    var existingItem = Context.Buglists
+                              .Where(i => i.Id == buglist.Id)
+                              .FirstOrDefault();
+      if (existingItem != null)
+            {
+               throw new Exception("Item already available");
+            }   
 
     try
     {
@@ -161,7 +169,7 @@ namespace TestCaseDashboard
 
     return buglist;
 }
-        public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CancelBuglistChanges(TestCaseDashboard.Models.mydatabase.Buglist item)
+      public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CancelBuglistChanges(TestCaseDashboard.Models.mydatabase.Buglist item)
         {
             var entityToCancel = Context.Entry(item);
             if (entityToCancel.State == EntityState.Modified)
@@ -782,49 +790,44 @@ namespace TestCaseDashboard
             return await Task.FromResult(itemToReturn);
         }
 
+
         partial void OnTestcaseCreated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseCreated(TestCaseDashboard.Models.mydatabase.Testcase item);
 
         public async Task<TestCaseDashboard.Models.mydatabase.Testcase> CreateTestcase(TestCaseDashboard.Models.mydatabase.Testcase testcase)
-        {
-            OnTestcaseCreated(testcase);
+{
+    OnTestcaseCreated(testcase);
 
-            var existingItem = Context.Testcases
+    var existingItem = Context.Testcases
                               .Where(i => i.Id == testcase.Id)
                               .FirstOrDefault();
 
-            if (existingItem != null)
-            {
-               throw new Exception("Item already available");
-            }            
+    if (existingItem != null)
+    {
+        throw new Exception("Item already available");
+    }
 
-            try
-            {
-                Context.Testcases.Add(testcase);
-                Context.SaveChanges();
-            }
-            catch
-            {
-                Context.Entry(testcase).State = EntityState.Detached;
-                throw;
-            }
+    // Automatically set UTC timestamps
+    if (testcase.Createdat == default)
+        testcase.Createdat = DateTime.UtcNow;
 
-            OnAfterTestcaseCreated(testcase);
+    testcase.Updatedat = DateTime.UtcNow;
 
-            return testcase;
-        }
+    try
+    {
+        Context.Testcases.Add(testcase);
+        Context.SaveChanges();
+    }
+    catch
+    {
+        Context.Entry(testcase).State = EntityState.Detached;
+        throw;
+    }
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Testcase> CancelTestcaseChanges(TestCaseDashboard.Models.mydatabase.Testcase item)
-        {
-            var entityToCancel = Context.Entry(item);
-            if (entityToCancel.State == EntityState.Modified)
-            {
-              entityToCancel.CurrentValues.SetValues(entityToCancel.OriginalValues);
-              entityToCancel.State = EntityState.Unchanged;
-            }
+    OnAfterTestcaseCreated(testcase);
 
-            return item;
-        }
+    return testcase;
+}
 
         partial void OnTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
@@ -860,7 +863,6 @@ namespace TestCaseDashboard
         {
             var itemToDelete = Context.Testcases
                               .Where(i => i.Id == id)
-                              .Include(i => i.Buglists)
                               .Include(i => i.TestcaseTeammembers)
                               .FirstOrDefault();
 
@@ -1023,10 +1025,11 @@ namespace TestCaseDashboard
         partial void OnTestcaseTeammemberDeleted(TestCaseDashboard.Models.mydatabase.TestcaseTeammember item);
         partial void OnAfterTestcaseTeammemberDeleted(TestCaseDashboard.Models.mydatabase.TestcaseTeammember item);
 
-        public async Task<TestCaseDashboard.Models.mydatabase.TestcaseTeammember> DeleteTestcaseTeammember(Guid id)
+         public async Task<TestCaseDashboard.Models.mydatabase.TestcaseTeammember> DeleteTestcaseTeammember(Guid id)
         {
             var itemToDelete = Context.TestcaseTeammembers
                               .Where(i => i.Id == id)
+                              .Include(i => i.Buglists)
                               .FirstOrDefault();
 
             if (itemToDelete == null)
@@ -1048,6 +1051,7 @@ namespace TestCaseDashboard
                 Context.Entry(itemToDelete).State = EntityState.Unchanged;
                 throw;
             }
+
 
             OnAfterTestcaseTeammemberDeleted(itemToDelete);
 

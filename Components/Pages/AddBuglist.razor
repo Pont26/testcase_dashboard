@@ -18,21 +18,7 @@
                         Visible="@(buglist != null)"
                         Submit="@FormSubmit">
 
-        <RadzenRow style="margin-bottom: 1rem">
-            <RadzenColumn SizeMD="3">
-                <RadzenLabel Text="Testcase" Component="Testcaseid" />
-            </RadzenColumn>
-            <RadzenColumn SizeMD="9">
-                <RadzenDropDownDataGrid Data="@testcasesForTestcaseid"
-                                        TextProperty="Screen"
-                                        ValueProperty="Id"
-                                        AllowClear="true"
-                                        Placeholder="Choose Testcase"
-                                        style="width:100%"
-                                        @bind-Value="buglist.Testcaseid"
-                                        Name="Testcaseid" />
-            </RadzenColumn>
-        </RadzenRow>
+   
 
         <RadzenRow style="margin-bottom: 1rem">
             <RadzenColumn SizeMD="3">

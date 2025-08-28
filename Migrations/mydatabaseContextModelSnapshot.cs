@@ -41,9 +41,9 @@ namespace TestCaseDashboard.Migrations
                         .HasColumnType("text")
                         .HasColumnName("remark");
 
-                    b.Property<Guid>("Testcaseid")
+                    b.Property<Guid>("TestcaseTeammemberid")
                         .HasColumnType("uuid")
-                        .HasColumnName("testcaseid");
+                        .HasColumnName("testmemberid");
 
                     b.Property<DateTime?>("Updatedat")
                         .HasColumnType("timestamp with time zone")
@@ -51,7 +51,7 @@ namespace TestCaseDashboard.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Testcaseid");
+                    b.HasIndex("TestcaseTeammemberid");
 
                     b.ToTable("buglist", "public", t =>
                         {
@@ -170,10 +170,6 @@ namespace TestCaseDashboard.Migrations
                         .HasColumnType("text")
                         .HasColumnName("screen");
 
-                    b.Property<int>("TestStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("teststatus");
-
                     b.Property<DateTime?>("Updatedat")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updatedat");
@@ -195,9 +191,17 @@ namespace TestCaseDashboard.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
                     b.Property<Guid>("Teammemberid")
                         .HasColumnType("uuid")
                         .HasColumnName("teammemberid");
+
+                    b.Property<int>("TestStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("testStatus");
 
                     b.Property<Guid>("Testcaseid")
                         .HasColumnType("uuid")
@@ -217,13 +221,13 @@ namespace TestCaseDashboard.Migrations
 
             modelBuilder.Entity("TestCaseDashboard.Models.mydatabase.Buglist", b =>
                 {
-                    b.HasOne("TestCaseDashboard.Models.mydatabase.Testcase", "Testcase")
+                    b.HasOne("TestCaseDashboard.Models.mydatabase.TestcaseTeammember", "TestcaseTeammember")
                         .WithMany("Buglists")
-                        .HasForeignKey("Testcaseid")
+                        .HasForeignKey("TestcaseTeammemberid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Testcase");
+                    b.Navigation("TestcaseTeammember");
                 });
 
             modelBuilder.Entity("TestCaseDashboard.Models.mydatabase.ProjectTeammember", b =>
@@ -291,9 +295,12 @@ namespace TestCaseDashboard.Migrations
 
             modelBuilder.Entity("TestCaseDashboard.Models.mydatabase.Testcase", b =>
                 {
-                    b.Navigation("Buglists");
-
                     b.Navigation("TestcaseTeammembers");
+                });
+
+            modelBuilder.Entity("TestCaseDashboard.Models.mydatabase.TestcaseTeammember", b =>
+                {
+                    b.Navigation("Buglists");
                 });
 #pragma warning restore 612, 618
         }

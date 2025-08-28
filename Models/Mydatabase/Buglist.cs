@@ -16,11 +16,11 @@ namespace TestCaseDashboard.Models.mydatabase
         [ScaffoldColumn(false)]
         public Guid Id { get; set; }
 
-        [Column("testcaseid")]
+        [Column("testmemberid")]
         [Required]
-        public Guid Testcaseid { get; set; }
+        public Guid TestcaseTeammemberid { get; set; }
 
-        public Testcase Testcase { get; set; }
+        public TestcaseTeammember TestcaseTeammember { get; set; }
 
         [Column("remark")]
         public string Remark { get; set; }

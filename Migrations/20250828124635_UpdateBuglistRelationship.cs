@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TestCaseDashboard.Migrations
 {
     /// <inheritdoc />
-    public partial class testcase_db : Migration
+    public partial class UpdateBuglistRelationship : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,7 +53,6 @@ namespace TestCaseDashboard.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     screen = table.Column<string>(type: "text", nullable: false),
                     function = table.Column<string>(type: "text", nullable: true),
-                    teststatus = table.Column<int>(type: "integer", nullable: false),
                     projectid = table.Column<Guid>(type: "uuid", nullable: false),
                     createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     updatedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -99,36 +98,14 @@ namespace TestCaseDashboard.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "buglist",
-                schema: "public",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    testcaseid = table.Column<Guid>(type: "uuid", nullable: false),
-                    remark = table.Column<string>(type: "text", nullable: true),
-                    image = table.Column<string>(type: "text", nullable: true),
-                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updatedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_buglist", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_buglist_testcase_testcaseid",
-                        column: x => x.testcaseid,
-                        principalSchema: "public",
-                        principalTable: "testcase",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "testcase_teammember",
                 schema: "public",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     teammemberid = table.Column<Guid>(type: "uuid", nullable: false),
+                    role = table.Column<int>(type: "integer", nullable: false),
+                    testStatus = table.Column<int>(type: "integer", nullable: false),
                     testcaseid = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -150,11 +127,35 @@ namespace TestCaseDashboard.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "buglist",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    testmemberid = table.Column<Guid>(type: "uuid", nullable: false),
+                    remark = table.Column<string>(type: "text", nullable: true),
+                    image = table.Column<string>(type: "text", nullable: true),
+                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updatedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_buglist", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_buglist_testcase_teammember_testmemberid",
+                        column: x => x.testmemberid,
+                        principalSchema: "public",
+                        principalTable: "testcase_teammember",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_buglist_testcaseid",
+                name: "IX_buglist_testmemberid",
                 schema: "public",
                 table: "buglist",
-                column: "testcaseid");
+                column: "testmemberid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_project_teammember_projectid",

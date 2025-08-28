@@ -13,3 +13,9 @@ namespace TestCaseDashboard.Models.mydatabase;
         Pending,
         Issue
     }
+
+  public enum Role{
+    Coder,
+    Tester,
+    Owner
+  }

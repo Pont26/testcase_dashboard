@@ -1,6 +1,7 @@
 using Radzen;
 using TestCaseDashboard.Components;
 using Microsoft.EntityFrameworkCore;
+using TestCaseDashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
