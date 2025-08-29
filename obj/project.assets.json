@@ -809,7 +809,7 @@
           }
         }
       },
-      "Radzen.Blazor/7.3.1": {
+      "Radzen.Blazor/7.3.2": {
         "type": "package",
         "dependencies": {
           "Microsoft.AspNetCore.Components": "9.0.8",
@@ -2682,10 +2682,10 @@
         "postgresql.png"
       ]
     },
-    "Radzen.Blazor/7.3.1": {
-      "sha512": "PMwiuX+HgMBYoRpfuj3/bksysLdAtk2fJF1fTGmw3rvtIp6gVnZpMcLbypcn1PPzLtUgBLNhclLIEhJfELPTxw==",
+    "Radzen.Blazor/7.3.2": {
+      "sha512": "T8cnkyLFg++ZE+HcDPNBXVEkgx6eUornrB/2eOjFuV7bDGiKWqlgv+jpUVyA9PMJFGtM+KVQz0xSx9gJyvaEfg==",
       "type": "package",
-      "path": "radzen.blazor/7.3.1",
+      "path": "radzen.blazor/7.3.2",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2705,7 +2705,7 @@
         "lib/net8.0/Radzen.Blazor.xml",
         "lib/net9.0/Radzen.Blazor.dll",
         "lib/net9.0/Radzen.Blazor.xml",
-        "radzen.blazor.7.3.1.nupkg.sha512",
+        "radzen.blazor.7.3.2.nupkg.sha512",
         "radzen.blazor.nuspec",
         "staticwebassets/Radzen.Blazor.js",
         "staticwebassets/Radzen.Blazor.min.js",

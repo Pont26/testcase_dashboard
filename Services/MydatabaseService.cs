@@ -825,38 +825,51 @@ return await Context.Testcases
         partial void OnTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
 
-      // In your mydatabaseService.cs file
-public async Task<TestCaseDashboard.Models.mydatabase.Testcase > UpdateTestcase(Guid id, TestCaseDashboard.Models.mydatabase.Testcase  updatedTestcase)
+public async Task<TestCaseDashboard.Models.mydatabase.Testcase> UpdateTestcase(Guid id, TestCaseDashboard.Models.mydatabase.Testcase testcase)
 {
-    // 1. Get the existing, tracked Testcase entity from the database.
-    // The .Include is essential for this to work correctly.
-    var existingTestcase = await Context.Testcases
-        .Include(t => t.TestcaseTeammembers)
-        .FirstOrDefaultAsync(t => t.Id == id);
+    // Include existing team members
+    var itemToUpdate = await Context.Testcases
+                                    .Include(t => t.TestcaseTeammembers)
+                                    .FirstOrDefaultAsync(i => i.Id == id);
 
-    if (existingTestcase == null)
+    if (itemToUpdate == null)
     {
-        throw new Exception("Testcase not found");
+        throw new Exception("Testcase no longer available");
     }
 
-    // 2. Update the main Testcase properties from the updated object.
-    // This is more robust than manual assignment.
-    Context.Entry(existingTestcase).CurrentValues.SetValues(updatedTestcase);
-    
-    // 3. Clear the old collection and add the new one.
-    // This correctly marks the old members for deletion and new members for addition.
-    existingTestcase.TestcaseTeammembers.Clear();
-    
-    foreach(var newMember in updatedTestcase.TestcaseTeammembers)
+    // Update main testcase fields
+    itemToUpdate.Screen = testcase.Screen;
+    itemToUpdate.Function = testcase.Function;
+    itemToUpdate.Projectid = testcase.Projectid;
+    itemToUpdate.Updatedat = DateTime.UtcNow;
+
+    // Update existing team members
+    if (testcase.TestcaseTeammembers != null)
     {
-        existingTestcase.TestcaseTeammembers.Add(newMember);
+        foreach (var updatedMember in testcase.TestcaseTeammembers)
+        {
+            var existing = itemToUpdate.TestcaseTeammembers
+                                       .FirstOrDefault(x => x.Id == updatedMember.Id);
+
+            if (existing != null)
+            {
+                existing.Teammemberid = updatedMember.Teammemberid;
+                existing.Role = updatedMember.Role;
+                existing.TestStatus = updatedMember.TestStatus;
+            }
+            // If member doesn't exist, we skip it (do not create new)
+        }
     }
-    
-    // 4. Save the changes to the database.
+
     await Context.SaveChangesAsync();
 
-    return existingTestcase;
+    return itemToUpdate;
 }
+
+
+
+
+
 
 
         partial void OnTestcaseDeleted(TestCaseDashboard.Models.mydatabase.Testcase item);

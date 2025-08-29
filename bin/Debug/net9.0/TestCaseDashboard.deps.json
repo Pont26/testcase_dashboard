@@ -12,7 +12,7 @@
           "Microsoft.EntityFrameworkCore": "9.0.8",
           "Microsoft.EntityFrameworkCore.Design": "9.0.8",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
-          "Radzen.Blazor": "7.3.1"
+          "Radzen.Blazor": "7.3.2"
         },
         "runtime": {
           "TestCaseDashboard.dll": {}
@@ -604,15 +604,15 @@
           }
         }
       },
-      "Radzen.Blazor/7.3.1": {
+      "Radzen.Blazor/7.3.2": {
         "dependencies": {
           "Microsoft.AspNetCore.Components": "9.0.8",
           "Microsoft.AspNetCore.Components.Web": "9.0.8"
         },
         "runtime": {
           "lib/net9.0/Radzen.Blazor.dll": {
-            "assemblyVersion": "7.3.1.0",
-            "fileVersion": "7.3.1.0"
+            "assemblyVersion": "7.3.2.0",
+            "fileVersion": "7.3.2.0"
           }
         }
       },
@@ -962,12 +962,12 @@
       "path": "npgsql.entityframeworkcore.postgresql/9.0.4",
       "hashPath": "npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512"
     },
-    "Radzen.Blazor/7.3.1": {
+    "Radzen.Blazor/7.3.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-PMwiuX+HgMBYoRpfuj3/bksysLdAtk2fJF1fTGmw3rvtIp6gVnZpMcLbypcn1PPzLtUgBLNhclLIEhJfELPTxw==",
-      "path": "radzen.blazor/7.3.1",
-      "hashPath": "radzen.blazor.7.3.1.nupkg.sha512"
+      "sha512": "sha512-T8cnkyLFg++ZE+HcDPNBXVEkgx6eUornrB/2eOjFuV7bDGiKWqlgv+jpUVyA9PMJFGtM+KVQz0xSx9gJyvaEfg==",
+      "path": "radzen.blazor/7.3.2",
+      "hashPath": "radzen.blazor.7.3.2.nupkg.sha512"
     },
     "System.CodeDom/6.0.0": {
       "type": "package",

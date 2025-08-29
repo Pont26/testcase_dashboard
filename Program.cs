@@ -17,10 +17,15 @@ builder.Services.AddRadzenCookieThemeService(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<TestCaseDashboard.mydatabaseService>();
+builder.Services.AddTransient<TestCaseDashboard.mydatabaseService>(); 
 builder.Services.AddDbContext<TestCaseDashboard.Data.mydatabaseContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("mydatabaseConnection"));
 });
+
+
+
+
 var app = builder.Build();
 var forwardingOptions = new ForwardedHeadersOptions()
 {
