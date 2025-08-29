@@ -11,6 +11,7 @@ namespace TestCaseDashboard.Models.mydatabase
         [Key]
         [Column("id")]
         [Required]
+         [ScaffoldColumn(false)]
         public Guid Id { get; set; }
 
         [Column("teammemberid")]

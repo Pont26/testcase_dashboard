@@ -49,7 +49,7 @@ namespace TestCaseDashboard.Components.Pages
         }
         protected override async Task OnInitializedAsync()
         {
-            testcaseTeammembers = await mydatabaseService.GetTestcaseTeammembers(new Query { Expand = "Teammember,Testcase" });
+            testcaseTeammembers = await mydatabaseService.GetTestcaseTeammembers(new Query { Expand = "Teammember,Testcase,Testcase.Project" });
         }
 
         protected async Task AddButtonClick(MouseEventArgs args)

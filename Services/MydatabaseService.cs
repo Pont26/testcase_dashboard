@@ -906,32 +906,32 @@ public async Task<TestCaseDashboard.Models.mydatabase.Testcase > UpdateTestcase(
 
         partial void OnTestcaseTeammembersRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.TestcaseTeammember> items);
 
-        public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.TestcaseTeammember>> GetTestcaseTeammembers(Query query = null)
+       public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.TestcaseTeammember>> GetTestcaseTeammembers(Query query = null)
+{
+    var items = Context.TestcaseTeammembers.AsQueryable();
+
+    items = items.Include(i => i.Teammember);
+    items = items.Include(i => i.Testcase);
+    items = items.Include(i => i.Testcase.Project); // Add this line
+
+    if (query != null)
+    {
+        if (!string.IsNullOrEmpty(query.Expand))
         {
-            var items = Context.TestcaseTeammembers.AsQueryable();
-
-            items = items.Include(i => i.Teammember);
-            items = items.Include(i => i.Testcase);
-
-            if (query != null)
+            var propertiesToExpand = query.Expand.Split(',');
+            foreach(var p in propertiesToExpand)
             {
-                if (!string.IsNullOrEmpty(query.Expand))
-                {
-                    var propertiesToExpand = query.Expand.Split(',');
-                    foreach(var p in propertiesToExpand)
-                    {
-                        items = items.Include(p.Trim());
-                    }
-                }
-
-                ApplyQuery(ref items, query);
+                items = items.Include(p.Trim());
             }
-
-            OnTestcaseTeammembersRead(ref items);
-
-            return await Task.FromResult(items);
         }
 
+        ApplyQuery(ref items, query);
+    }
+
+    OnTestcaseTeammembersRead(ref items);
+
+    return await Task.FromResult(items);
+}
         partial void OnTestcaseTeammemberGet(TestCaseDashboard.Models.mydatabase.TestcaseTeammember item);
         partial void OnGetTestcaseTeammemberById(ref IQueryable<TestCaseDashboard.Models.mydatabase.TestcaseTeammember> items);
 

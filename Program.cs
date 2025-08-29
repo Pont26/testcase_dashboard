@@ -13,6 +13,8 @@ builder.Services.AddRadzenCookieThemeService(options =>
     options.Name = "TestCaseDashboardTheme";
     options.Duration = TimeSpan.FromDays(365);
 });
+
+
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<TestCaseDashboard.mydatabaseService>();
 builder.Services.AddDbContext<TestCaseDashboard.Data.mydatabaseContext>(options =>
