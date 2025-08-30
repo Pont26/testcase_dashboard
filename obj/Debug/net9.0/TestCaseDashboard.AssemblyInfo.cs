@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TestCaseDashboard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e7be7e0cdefc41eb6a3ffff1c7c40f933829d2d7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79c0dda809ede673a8efb4d95bee0ac97dbf06ae")]
 [assembly: System.Reflection.AssemblyProductAttribute("TestCaseDashboard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TestCaseDashboard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

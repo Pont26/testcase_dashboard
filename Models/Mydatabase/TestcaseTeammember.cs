@@ -33,7 +33,12 @@ namespace TestCaseDashboard.Models.mydatabase
 
         public Testcase Testcase { get; set; }
 
-        public ICollection<Buglist> Buglists { get; set; } = new List<Buglist>();
+         [Column("createdat")]
+        public DateTime? Createdat { get; set; }
+
+        [Column("updatedat")]
+        public DateTime? Updatedat { get; set; }
+
 
     }
 }

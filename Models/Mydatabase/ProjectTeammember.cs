@@ -25,5 +25,11 @@ namespace TestCaseDashboard.Models.mydatabase
         public Guid Projectid { get; set; }
 
         public Project Project { get; set; }
+
+         [Column("createdat")]
+        public DateTime? Createdat { get; set; }
+
+        [Column("updatedat")]
+        public DateTime? Updatedat { get; set; }
     }
 }

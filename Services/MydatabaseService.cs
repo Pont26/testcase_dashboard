@@ -65,45 +65,44 @@ namespace TestCaseDashboard
             }
         }
 
-
-       
-        partial void OnBuglistsRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
-
-    public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Buglist>> GetBuglists(Query query = null)
-{
-    // The key change: create a NEW, isolated context for this one operation
-    // from the factory.
-    using (var context = _contextFactory.CreateDbContext())
-    {
-        var items = context.Buglists.AsQueryable();
-
-        items = items.Include(i => i.TestcaseTeammember);
-
-        if (query != null)
+ public async Task ExportBuglistsToExcel(Query query = null, string fileName = null)
         {
-            if (!string.IsNullOrEmpty(query.Expand))
-            {
-                var propertiesToExpand = query.Expand.Split(',');
-                foreach(var p in propertiesToExpand)
-                {
-                    items = items.Include(p.Trim());
-                }
-            }
-
-            ApplyQuery(ref items, query);
+            navigationManager.NavigateTo(query != null ? query.ToUrl($"export/mydatabase/buglists/excel(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')") : $"export/mydatabase/buglists/excel(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')", true);
         }
 
-        OnBuglistsRead(ref items);
+        public async Task ExportBuglistsToCSV(Query query = null, string fileName = null)
+        {
+            navigationManager.NavigateTo(query != null ? query.ToUrl($"export/mydatabase/buglists/csv(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')") : $"export/mydatabase/buglists/csv(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')", true);
+        }
 
-        // Crucial fix: Execute the query asynchronously and return the result.
-        // This materializes the data BEFORE the `using` block ends.
-        var result = await items.ToListAsync();
+        partial void OnBuglistsRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
 
-        return result.AsQueryable();
-    } // The context is automatically disposed of here
-}
+        public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Buglist>> GetBuglists(Query query = null)
+        {
+            var items = Context.Buglists.AsQueryable();
 
-       partial void OnBuglistGet(TestCaseDashboard.Models.mydatabase.Buglist item);
+            items = items.Include(i => i.Testcase);
+
+            if (query != null)
+            {
+                if (!string.IsNullOrEmpty(query.Expand))
+                {
+                    var propertiesToExpand = query.Expand.Split(',');
+                    foreach(var p in propertiesToExpand)
+                    {
+                        items = items.Include(p.Trim());
+                    }
+                }
+
+                ApplyQuery(ref items, query);
+            }
+
+            OnBuglistsRead(ref items);
+
+            return await Task.FromResult(items);
+        }
+
+        partial void OnBuglistGet(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnGetBuglistById(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
 
 
@@ -113,7 +112,7 @@ namespace TestCaseDashboard
                               .AsNoTracking()
                               .Where(i => i.Id == id);
 
-            items = items.Include(i => i.TestcaseTeammember);
+            items = items.Include(i => i.Testcase);
  
             OnGetBuglistById(ref items);
 
@@ -127,40 +126,25 @@ namespace TestCaseDashboard
         partial void OnBuglistCreated(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnAfterBuglistCreated(TestCaseDashboard.Models.mydatabase.Buglist item);
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CreateBuglist(TestCaseDashboard.Models.mydatabase.Buglist buglist)
+         public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CreateBuglist(TestCaseDashboard.Models.mydatabase.Buglist buglist)
 {
-    // Create a new, isolated context for this single operation
+    // Use a fresh DbContext instance for this operation.
     using (var context = _contextFactory.CreateDbContext())
     {
         OnBuglistCreated(buglist);
 
-        // Check for an existing item on the same context
-        var existingItem = await context.Buglists
-                                        .AsNoTracking()
-                                        .FirstOrDefaultAsync(i => i.Id == buglist.Id);
-        
-        if (existingItem != null)
-        {
-            throw new Exception("Item already available");
-        }
+        // Set the creation and update timestamps to UTC.
+        buglist.Createdat = DateTime.UtcNow;
+        buglist.Updatedat = DateTime.UtcNow;
 
         try
         {
-            // Add the new buglist item to the fresh context.
             context.Buglists.Add(buglist);
-
-            // Set the creation and update timestamps.
-            var now = DateTime.UtcNow;
-            buglist.Createdat = now;
-            buglist.Updatedat = now;
-
-            // Save the changes to the database.
             await context.SaveChangesAsync();
         }
-        catch (Exception)
+        catch
         {
-            // The `using` block will automatically dispose the context,
-            // so manually detaching the entity is no longer necessary.
+            context.Entry(buglist).State = EntityState.Detached;
             throw;
         }
 
@@ -169,52 +153,70 @@ namespace TestCaseDashboard
         return buglist;
     }
 }
-      public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CancelBuglistChanges(TestCaseDashboard.Models.mydatabase.Buglist item)
+
+       public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CancelBuglistChanges(TestCaseDashboard.Models.mydatabase.Buglist item)
 {
-    // Use the correct name: `_contextFactory`.
+    // Use a fresh DbContext instance for this operation.
     using (var context = _contextFactory.CreateDbContext())
     {
-        // Fetch the original item asynchronously.
-        var originalItem = await context.Buglists
-                                        .AsNoTracking()
-                                        .FirstOrDefaultAsync(i => i.Id == item.Id);
+        // Attach the item to the new context.
+        var entityToCancel = context.Entry(item);
         
-        // Return the original item.
-        return originalItem;
+        // If the entity is being tracked as modified, revert its changes.
+        if (entityToCancel.State == EntityState.Modified)
+        {
+            entityToCancel.CurrentValues.SetValues(entityToCancel.OriginalValues);
+            entityToCancel.State = EntityState.Unchanged;
+        }
+
+        // Return the item with its state correctly updated.
+        return item;
     }
 }
+
         partial void OnBuglistUpdated(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnAfterBuglistUpdated(TestCaseDashboard.Models.mydatabase.Buglist item);
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Buglist> UpdateBuglist(Guid id, TestCaseDashboard.Models.mydatabase.Buglist buglist)
+       public async Task<TestCaseDashboard.Models.mydatabase.Buglist> UpdateBuglist(Guid id, TestCaseDashboard.Models.mydatabase.Buglist buglist)
 {
-    // 💡 Use a new, short-lived DbContext instance.
+    // Use a fresh DbContext instance for this operation.
     using (var context = _contextFactory.CreateDbContext())
     {
         OnBuglistUpdated(buglist);
 
-        // Find the existing item asynchronously using the new context.
+        // Fetch the item from the database.
         var itemToUpdate = await context.Buglists
-                                        .Where(i => i.Id == buglist.Id)
-                                        .FirstOrDefaultAsync(); // 💡 Use async method
+                                        .Where(i => i.Id == id)
+                                        .FirstOrDefaultAsync();
 
         if (itemToUpdate == null)
         {
-            throw new Exception("Item no longer available");
+            throw new ApplicationException("Item no longer available");
         }
-        
-        // Update properties manually.
-        itemToUpdate.Remark = buglist.Remark;
-        itemToUpdate.Image = buglist.Image;
-        itemToUpdate.Updatedat = DateTime.UtcNow;
 
-        // Save the changes to the database.
-        await context.SaveChangesAsync();
+        // Set the Updatedat property to the current UTC time.
+        buglist.Updatedat = DateTime.UtcNow;
+
+        // Apply the new values from the input object to the tracked entity.
+        context.Entry(itemToUpdate).CurrentValues.SetValues(buglist);
+        
+        try
+        {
+            // Save changes to the database asynchronously.
+            await context.SaveChangesAsync();
+        }
+        catch (Exception)
+        {
+            // In case of a concurrency exception, detach the entity.
+            context.Entry(itemToUpdate).State = EntityState.Detached;
+            throw;
+        }
+
+        OnAfterBuglistUpdated(itemToUpdate);
 
         return itemToUpdate;
     }
 }
-
         partial void OnBuglistDeleted(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnAfterBuglistDeleted(TestCaseDashboard.Models.mydatabase.Buglist item);
 
@@ -1197,7 +1199,6 @@ public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(
         // Fetch the item asynchronously, including related data.
         var itemToDelete = await context.TestcaseTeammembers
                                        .Where(i => i.Id == id)
-                                       .Include(i => i.Buglists)
                                        .FirstOrDefaultAsync();
 
         if (itemToDelete == null)

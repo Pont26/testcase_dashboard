@@ -8,7 +8,10 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
-              
+                <RadzenSplitButton Icon="get_app" Text="Export" Click="@ExportClick" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenSplitButtonItem Text="Excel" Value="xlsx" />
+                    <RadzenSplitButtonItem Text="CSV" Value="csv" />
+                </RadzenSplitButton>
                 <RadzenButton Icon="add_circle_outline" Text="Add" Click="@AddButtonClick" Variant="Variant.Flat" />
             </RadzenStack>
         </RadzenColumn>
@@ -16,46 +19,26 @@
     <RadzenTextBox Placeholder="Search ..." style="display: block; width: 100%" @oninput="@Search" aria-label="Search by all string columns" />
     <RadzenRow>
       <RadzenColumn SizeMD=12>
-        <RadzenDataGrid @ref="grid0" ColumnWidth="200px"   AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[]{5, 10, 20, 30})
-            Data="@(buglists)" TItem="TestCaseDashboard.Models.mydatabase.Buglist" RowSelect="@EditRow">
+        <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[]{5, 10, 20, 30})
+            Data="@(buglists)" TItem="TestCaseDashboard.Models.mydatabase.Buglist" RowDoubleClick="@EditRow">
             <Columns>
-            <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Project.Projectname" Title="Project"></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Project.ProjectSource" Title="ProjectSource"></RadzenDataGridColumn>
-             
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Screen" Title="Page">
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Function" Title="Function">
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Remark" Title="Remark">
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Title="Image" Sortable="false" Filterable="false">
+                
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Project.Projectname" Title="Project" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Screen" Title="Screen" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Testcase.Function" Title="Function" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Remark" Title="Remark" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Image" Title="Image" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Createdat" Title="Createdat" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Updatedat" Title="Updatedat" />
+                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
                     <Template Context="buglist">
-                        @if (!string.IsNullOrEmpty(buglist.Image))
-                        {
-                            <img src="@buglist.Image" style="max-width: 150px; border-radius: 4px;" alt="Bug Image" />
-                        }
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Createdat" Title="Createdat">
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Property="Updatedat" Title="Updatedat">
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TestCaseDashboard.Models.mydatabase.Buglist" Filterable="false" Sortable="false" Width="110px" TextAlign="TextAlign.Center">
-                    <Template Context="buglist">
-                         <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Size="ButtonSize.Medium"
-    Shade="Shade.Lighter" Variant="Variant.Flat"
-    Click=@(args => EditRow(buglist)) @onclick:stopPropagation="true" />
-                        
-
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
                             Shade="Shade.Lighter" Variant="Variant.Flat"
                             Click=@(args => GridDeleteButtonClick(args, buglist)) @onclick:stopPropagation="true" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
-
         </RadzenDataGrid>
-
-    </RadzenColumn>
-  </RadzenRow>
+      </RadzenColumn>
+    </RadzenRow>
 </RadzenStack>

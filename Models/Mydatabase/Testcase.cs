@@ -36,5 +36,8 @@ namespace TestCaseDashboard.Models.mydatabase
         public DateTime? Updatedat { get; set; }
 
         public ICollection<TestcaseTeammember> TestcaseTeammembers { get; set; } = new List<TestcaseTeammember>();
+        
+        public ICollection<Buglist> Buglists { get; set; } = new List<Buglist>();
+
     }
 }

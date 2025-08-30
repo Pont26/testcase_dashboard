@@ -64,17 +64,14 @@ protected TestStatus? selectedOwnerStatus;
         protected IEnumerable<TestCaseDashboard.Models.mydatabase.Teammember> teammembersForCoder;
         protected IEnumerable<KeyValuePair<TestStatus, string>> testStatusList;
 
-
-
-
-        protected async Task FormSubmit()
+protected async Task FormSubmit()
 {
     try
     {
         // Save the testcase first
         await mydatabaseService.CreateTestcase(testcase);
 
-        // Create Teammembers
+        // Declare and initialize the list for TestcaseTeammember entries
         var tecList = new List<TestcaseTeammember>();
 
         if (selectedCoderId.HasValue && selectedCoderStatus.HasValue)
@@ -119,15 +116,33 @@ protected TestStatus? selectedOwnerStatus;
             await mydatabaseService.CreateTestcaseTeammember(t);
         }
 
+        // Check for any failed statuses and create a Buglist entry
+        if (selectedCoderStatus == TestStatus.Fail ||
+            selectedTesterStatus == TestStatus.Fail ||
+            selectedOwnerStatus == TestStatus.Fail ||
+            selectedCoderStatus == TestStatus.Issue ||
+            selectedTesterStatus == TestStatus.Issue ||
+            selectedOwnerStatus == TestStatus.Issue)
+        {
+            var buglistEntry = new TestCaseDashboard.Models.mydatabase.Buglist
+            {
+                Id = Guid.NewGuid(),
+                Testcaseid = testcase.Id,
+                
+            };
+            await mydatabaseService.CreateBuglist(buglistEntry);
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "Bug Created", Detail = "A new bug has been created in the buglist due to a failed test status." });
+        }
+
         DialogService.Close(testcase);
     }
     catch (Exception ex)
     {
         errorVisible = true;
+        // Optionally, log the exception for debugging
+        Console.WriteLine(ex.Message);
     }
 }
-
-
         protected async Task CancelButtonClick(MouseEventArgs args)
         {
             DialogService.Close(null);

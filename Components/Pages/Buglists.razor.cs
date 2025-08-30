@@ -41,14 +41,17 @@ namespace TestCaseDashboard.Components.Pages
 
         protected async Task Search(ChangeEventArgs args)
         {
-            search = $"{args.Value}";
+            search = (string)args.Value;
 
             await grid0.GoToPage(0);
 
-            buglists = await mydatabaseService.GetBuglists(new Query { Filter = $@"i => i.Remark.Contains(@0) || i.Image.Contains(@0)", FilterParameters = new object[] { search }, Expand = "Testcase" });
+            // Corrected: Filter on all relevant fields including navigation properties
+            buglists = await mydatabaseService.GetBuglists(new Query { Filter = $@"i => i.Remark.Contains(@0) || i.Image.Contains(@0) || i.Testcase.Project.Name.Contains(@0) || i.Testcase.Screen.Contains(@0) || i.Testcase.Function.Contains(@0)", FilterParameters = new object[] { search }, Expand = "Testcase.Project" });
         }
+
         protected override async Task OnInitializedAsync()
         {
+            // Simplified: Load the data once on initialization with an expand for related properties
             buglists = await mydatabaseService.GetBuglists(new Query { Expand = "Testcase.Project" });
         }
 
@@ -58,9 +61,9 @@ namespace TestCaseDashboard.Components.Pages
             await grid0.Reload();
         }
 
-        protected async Task EditRow(TestCaseDashboard.Models.mydatabase.Buglist args)
+        protected async Task EditRow(DataGridRowMouseEventArgs<TestCaseDashboard.Models.mydatabase.Buglist> args)
         {
-            await DialogService.OpenAsync<EditBuglist>("Edit Buglist", new Dictionary<string, object> { {"Id", args.Id} });
+            await DialogService.OpenAsync<EditBuglist>("Edit Buglist", new Dictionary<string, object> { {"Id", args.Data.Id} });
         }
 
         protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Buglist buglist)
@@ -88,6 +91,24 @@ namespace TestCaseDashboard.Components.Pages
             }
         }
 
-      
+        protected async Task ExportClick(RadzenSplitButtonItem args)
+        {
+            var query = new Query
+            {
+                Filter = grid0.Query.Filter,
+                OrderBy = grid0.Query.OrderBy,
+                Expand = "Testcase,Testcase.Project", // Expanded to include both Testcase and Project
+                Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property))
+            };
+
+            if (args?.Value == "csv")
+            {
+                await mydatabaseService.ExportBuglistsToCSV(query, "Buglists");
+            }
+            else if (args == null || args.Value == "xlsx")
+            {
+                await mydatabaseService.ExportBuglistsToExcel(query, "Buglists");
+            }
+        }
     }
 }
