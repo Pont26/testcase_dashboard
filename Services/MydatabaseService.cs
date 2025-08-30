@@ -8,6 +8,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using TestCaseDashboard.Models.mydatabase;
 
 using TestCaseDashboard.Data;
 
@@ -65,7 +66,8 @@ namespace TestCaseDashboard
             }
         }
 
- public async Task ExportBuglistsToExcel(Query query = null, string fileName = null)
+
+    public async Task ExportBuglistsToExcel(Query query = null, string fileName = null)
         {
             navigationManager.NavigateTo(query != null ? query.ToUrl($"export/mydatabase/buglists/excel(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')") : $"export/mydatabase/buglists/excel(fileName='{(!string.IsNullOrEmpty(fileName) ? UrlEncoder.Default.Encode(fileName) : "Export")}')", true);
         }
@@ -77,56 +79,69 @@ namespace TestCaseDashboard
 
         partial void OnBuglistsRead(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
 
-        public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Buglist>> GetBuglists(Query query = null)
+       public async Task<IQueryable<TestCaseDashboard.Models.mydatabase.Buglist>> GetBuglists(Query query = null)
+{
+    // Use a fresh DbContext instance for this operation.
+    var context = _contextFactory.CreateDbContext();
+
+    // The rest of the logic remains the same
+    var items = context.Buglists.AsQueryable();
+    
+    // Original Include is fine, but it will be overridden by the query.Expand if it contains "Testcase"
+    // items = items.Include(i => i.Testcase); 
+
+    if (query != null)
+    {
+        if (!string.IsNullOrEmpty(query.Expand))
         {
-            var items = Context.Buglists.AsQueryable();
-
-            items = items.Include(i => i.Testcase);
-
-            if (query != null)
+            var propertiesToExpand = query.Expand.Split(',');
+            foreach(var p in propertiesToExpand)
             {
-                if (!string.IsNullOrEmpty(query.Expand))
-                {
-                    var propertiesToExpand = query.Expand.Split(',');
-                    foreach(var p in propertiesToExpand)
-                    {
-                        items = items.Include(p.Trim());
-                    }
-                }
-
-                ApplyQuery(ref items, query);
+                items = items.Include(p.Trim());
             }
-
-            OnBuglistsRead(ref items);
-
-            return await Task.FromResult(items);
         }
+        
+        ApplyQuery(ref items, query);
+    }
+
+    OnBuglistsRead(ref items);
+
+    return await Task.FromResult(items);
+}
+
+
 
         partial void OnBuglistGet(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnGetBuglistById(ref IQueryable<TestCaseDashboard.Models.mydatabase.Buglist> items);
 
 
-        public async Task<TestCaseDashboard.Models.mydatabase.Buglist> GetBuglistById(Guid id)
-        {
-            var items = Context.Buglists
-                              .AsNoTracking()
-                              .Where(i => i.Id == id);
+       public async Task<TestCaseDashboard.Models.mydatabase.Buglist> GetBuglistById(Guid id)
+{
+    // Use a fresh DbContext instance for this operation.
+    using (var context = _contextFactory.CreateDbContext())
+    {
+        // Chain the query for better readability.
+        var items = context.Buglists
+                           .AsNoTracking()
+                           .Include(i => i.Testcase)
+                           .Where(i => i.Id == id);
 
-            items = items.Include(i => i.Testcase);
- 
-            OnGetBuglistById(ref items);
+        OnGetBuglistById(ref items);
 
-            var itemToReturn = items.FirstOrDefault();
+        // Execute the query asynchronously and get the single item.
+        var itemToReturn = await items.FirstOrDefaultAsync();
 
-            OnBuglistGet(itemToReturn);
+        OnBuglistGet(itemToReturn);
 
-            return await Task.FromResult(itemToReturn);
-        }
+        // Return the item directly.
+        return itemToReturn;
+    }
+}
 
         partial void OnBuglistCreated(TestCaseDashboard.Models.mydatabase.Buglist item);
         partial void OnAfterBuglistCreated(TestCaseDashboard.Models.mydatabase.Buglist item);
 
-         public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CreateBuglist(TestCaseDashboard.Models.mydatabase.Buglist buglist)
+       public async Task<TestCaseDashboard.Models.mydatabase.Buglist> CreateBuglist(TestCaseDashboard.Models.mydatabase.Buglist buglist)
 {
     // Use a fresh DbContext instance for this operation.
     using (var context = _contextFactory.CreateDbContext())
@@ -945,14 +960,16 @@ public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(
 
         partial void OnTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
         partial void OnAfterTestcaseUpdated(TestCaseDashboard.Models.mydatabase.Testcase item);
-
-   public async Task<TestCaseDashboard.Models.mydatabase.Testcase> UpdateTestcase(Guid id, TestCaseDashboard.Models.mydatabase.Testcase updatedTestcase)
+public async Task<TestCaseDashboard.Models.mydatabase.Testcase> UpdateTestcase(
+    Guid id, 
+    TestCaseDashboard.Models.mydatabase.Testcase updatedTestcase)
 {
     using var db = _contextFactory.CreateDbContext();
 
     // 1. Load existing testcase with children
     var existingTestcase = await db.Testcases
         .Include(t => t.TestcaseTeammembers)
+        .Include(t => t.Buglists) // Include Buglists to check existing
         .FirstOrDefaultAsync(t => t.Id == id);
 
     if (existingTestcase == null)
@@ -961,7 +978,27 @@ public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(
     // 2. Update scalar properties
     db.Entry(existingTestcase).CurrentValues.SetValues(updatedTestcase);
 
-    // 3. Sync child collection
+    // 2a. Propagate Testcase status to all teammembers
+    foreach (var member in existingTestcase.TestcaseTeammembers)
+    {
+        member.TestStatus = updatedTestcase.TestcaseTeammembers.FirstOrDefault()?.TestStatus ?? member.TestStatus;
+    }
+
+    // 2b. Create Buglist if status is Fail/Issue and not already created
+    var overallStatus = updatedTestcase.TestcaseTeammembers.FirstOrDefault()?.TestStatus;
+    if ((overallStatus == TestStatus.Fail || overallStatus == TestStatus.Issue)
+        && !existingTestcase.Buglists.Any())
+    {
+        var bug = new TestCaseDashboard.Models.mydatabase.Buglist
+        {
+            Id = Guid.NewGuid(),
+            Testcaseid = existingTestcase.Id,
+            Createdat = DateTime.UtcNow
+        };
+        db.Buglists.Add(bug);
+    }
+
+    // 3. Sync child collection (add/update/remove members)
     var existingMembers = existingTestcase.TestcaseTeammembers.ToList();
 
     // Remove deleted members
@@ -991,7 +1028,6 @@ public async Task<TestCaseDashboard.Models.mydatabase.Testcase> GetTestcaseById(
     await db.SaveChangesAsync();
     return existingTestcase;
 }
-
 
 
         partial void OnTestcaseDeleted(TestCaseDashboard.Models.mydatabase.Testcase item);
