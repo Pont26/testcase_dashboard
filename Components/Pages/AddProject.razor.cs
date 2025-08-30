@@ -48,6 +48,7 @@ namespace TestCaseDashboard.Components.Pages
             try
             {
                 await mydatabaseService.CreateProject(project);
+                 StateHasChanged();
                 DialogService.Close(project);
             }
             catch (Exception ex)

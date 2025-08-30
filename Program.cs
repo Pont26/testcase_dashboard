@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TestCaseDashboard;
 
 var builder = WebApplication.CreateBuilder(args);
+
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(options => options.MaximumReceiveMessageSize = 10 * 1024 * 1024);
 builder.Services.AddControllers();
@@ -14,17 +15,18 @@ builder.Services.AddRadzenCookieThemeService(options =>
     options.Duration = TimeSpan.FromDays(365);
 });
 
-
 builder.Services.AddHttpClient();
+
+// Register the service once, with the correct lifetime.
+// A scoped lifetime is a good default for a service that will be used within a single user request.
 builder.Services.AddScoped<TestCaseDashboard.mydatabaseService>();
-builder.Services.AddTransient<TestCaseDashboard.mydatabaseService>(); 
-builder.Services.AddDbContext<TestCaseDashboard.Data.mydatabaseContext>(options =>
+
+// CRITICAL FIX: Use AddDbContextFactory instead of AddDbContext.
+// This registers the factory that your service class relies on.
+builder.Services.AddDbContextFactory<TestCaseDashboard.Data.mydatabaseContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("mydatabaseConnection"));
 });
-
-
-
 
 var app = builder.Build();
 var forwardingOptions = new ForwardedHeadersOptions()
@@ -34,11 +36,11 @@ var forwardingOptions = new ForwardedHeadersOptions()
 forwardingOptions.KnownNetworks.Clear();
 forwardingOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardingOptions);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

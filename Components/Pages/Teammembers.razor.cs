@@ -54,68 +54,57 @@ namespace TestCaseDashboard.Components.Pages
 
         protected async Task AddButtonClick(MouseEventArgs args)
         {
-            await DialogService.OpenAsync<AddTeammember>("Add Teammember", null);
-            await grid0.Reload();
+             var result = await DialogService.OpenAsync<AddTeammember>("Add Teammember", null);
+    if (result != null)
+    {
+        await LoadTeammembers(); // ✅ refresh only if saved
+    }
         }
 
         protected async Task EditRow(TestCaseDashboard.Models.mydatabase.Teammember args)
         {
-            await DialogService.OpenAsync<EditTeammember>("Edit Teammember", new Dictionary<string, object> { {"Id", args.Id} });
-            //await EditRow(args);
-            await grid0.Reload();
+            var result = await DialogService.OpenAsync<EditTeammember>("Edit Teammember", new Dictionary<string, object> { {"Id", args.Id} });
+    if (result != null)
+    {
+        await LoadTeammembers(); // ✅ refresh only if saved
+    }
 
         }
 
-        protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Teammember teammember)
+       protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Teammember teammember)
+{
+    try
+    {
+        if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
         {
-            try
-            {
-                if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
-                {
-                    var deleteResult = await mydatabaseService.DeleteTeammember(teammember.Id);
+            var deleteResult = await mydatabaseService.DeleteTeammember(teammember.Id);
 
-                    if (deleteResult != null)
-                    {
-                        await grid0.Reload();
-                    }
-                }
-            }
-            catch (Exception ex)
+            if (deleteResult != null)
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = $"Error",
-                    Detail = $"Unable to delete Teammember"
-                });
+                await LoadTeammembers(); // ✅ awaited
             }
         }
+    }
+    catch (Exception)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = $"Error",
+            Detail = $"Unable to delete Teammember"
+        });
+    }
+}
+
+private async Task LoadTeammembers()
+{
+    teammembers = await mydatabaseService.GetTeammembers(
+        new Query { Filter = $@"i => i.Name.Contains(@0)", FilterParameters = new object[] { search } });
+    await grid0.Reload();
+}
 
         
 
-        protected async Task ExportClick(RadzenSplitButtonItem args)
-        {
-            if (args?.Value == "csv")
-            {
-                await mydatabaseService.ExportTeammembersToCSV(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Teammembers");
-            }
-
-            if (args == null || args.Value == "xlsx")
-            {
-                await mydatabaseService.ExportTeammembersToExcel(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Teammembers");
-            }
-        }
+      
     }
 }

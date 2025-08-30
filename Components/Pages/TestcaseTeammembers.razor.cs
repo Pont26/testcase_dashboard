@@ -52,15 +52,14 @@ namespace TestCaseDashboard.Components.Pages
             testcaseTeammembers = await mydatabaseService.GetTestcaseTeammembers(new Query { Expand = "Teammember,Testcase,Testcase.Project" });
         }
 
-        protected async Task AddButtonClick(MouseEventArgs args)
-        {
-            await DialogService.OpenAsync<AddTestcaseTeammember>("Add TestcaseTeammember", null);
-            await grid0.Reload();
-        }
+       
 
         protected async Task EditRow(TestCaseDashboard.Models.mydatabase.TestcaseTeammember args)
         {
-            await DialogService.OpenAsync<EditTestcaseTeammember>("Edit TestcaseTeammember", new Dictionary<string, object> { {"Id", args.Id} });
+           var result =  await DialogService.OpenAsync<EditTestcaseTeammember>("Edit TestcaseTeammember", new Dictionary<string, object> { {"Id", args.Id} });
+           if(result!=null){
+           LoadTestcaseTeammembers();
+           }
         }
 
         protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.TestcaseTeammember testcaseTeammember)
@@ -73,7 +72,7 @@ namespace TestCaseDashboard.Components.Pages
 
                     if (deleteResult != null)
                     {
-                        await grid0.Reload();
+                        LoadTestcaseTeammembers();
                     }
                 }
             }
@@ -88,29 +87,16 @@ namespace TestCaseDashboard.Components.Pages
             }
         }
 
-        protected async Task ExportClick(RadzenSplitButtonItem args)
-        {
-            if (args?.Value == "csv")
-            {
-                await mydatabaseService.ExportTestcaseTeammembersToCSV(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "Teammember,Testcase",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "TestcaseTeammembers");
-            }
+        private async Task LoadTestcaseTeammembers()
+{
+    testcaseTeammembers = await mydatabaseService.GetTestcaseTeammembers(
+        new Query 
+        { 
+            Expand = "Teammember,Testcase,Testcase.Project" 
+        });
+    await grid0.Reload();
+}
 
-            if (args == null || args.Value == "xlsx")
-            {
-                await mydatabaseService.ExportTestcaseTeammembersToExcel(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "Teammember,Testcase",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "TestcaseTeammembers");
-            }
-        }
+       
     }
 }

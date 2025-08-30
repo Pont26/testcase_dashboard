@@ -44,6 +44,7 @@ namespace TestCaseDashboard.Components.Pages
             try
             {
                 await mydatabaseService.CreateTeammember(teammember);
+                StateHasChanged();
                 DialogService.Close(teammember);
             }
             catch (Exception ex)

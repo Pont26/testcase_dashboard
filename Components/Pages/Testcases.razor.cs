@@ -47,71 +47,65 @@ namespace TestCaseDashboard.Components.Pages
 
             testcases = await mydatabaseService.GetTestcases(new Query { Filter = $@"i => i.Screen.Contains(@0) || i.Function.Contains(@0)", FilterParameters = new object[] { search }, Expand = "Project" });
         }
-        protected override async Task OnInitializedAsync()
-        {
-           testcases = await mydatabaseService.GetTestcases(new Query { Expand = "Project,TestcaseTeammembers" });
+       protected override async Task OnInitializedAsync()
+{
+    await LoadTestcase(); // reuse helper
+}
 
-        }
+protected async Task AddButtonClick(MouseEventArgs args)
+{
+    var result = await DialogService.OpenAsync<AddTestcase>("Add Testcase", null);
+    if(result != null){
+        await LoadTestcase(); // ✅ awaited
+    }
+}
 
-        protected async Task AddButtonClick(MouseEventArgs args)
-        {
-            await DialogService.OpenAsync<AddTestcase>("Add Testcase", null);
-            await grid0.Reload();
-        }
+protected async Task EditRow(TestCaseDashboard.Models.mydatabase.Testcase args)
+{
+   var result = await DialogService.OpenAsync<EditTestcase>("Edit Testcase", new Dictionary<string, object> { {"Id", args.Id} });
+   if(result != null){
+        await LoadTestcase(); // ✅ awaited
+   }
+}
 
-        protected async Task EditRow(TestCaseDashboard.Models.mydatabase.Testcase args)
+protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Testcase testcase)
+{
+    try
+    {
+        if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
         {
-            await DialogService.OpenAsync<EditTestcase>("Edit Testcase", new Dictionary<string, object> { {"Id", args.Id} });
-        }
+            var deleteResult = await mydatabaseService.DeleteTestcase(testcase.Id);
 
-        protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Testcase testcase)
-        {
-            try
+            if (deleteResult != null)
             {
-                if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
-                {
-                    var deleteResult = await mydatabaseService.DeleteTestcase(testcase.Id);
-
-                    if (deleteResult != null)
-                    {
-                        await grid0.Reload();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = $"Error",
-                    Detail = $"Unable to delete Testcase"
-                });
+                await LoadTestcase(); // ✅ awaited
             }
         }
-
-        protected async Task ExportClick(RadzenSplitButtonItem args)
+    }
+    catch (Exception)
+    {
+        NotificationService.Notify(new NotificationMessage
         {
-            if (args?.Value == "csv")
-            {
-                await mydatabaseService.ExportTestcasesToCSV(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "Project",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Testcases");
-            }
+            Severity = NotificationSeverity.Error,
+            Summary = $"Error",
+            Detail = $"Unable to delete Testcase"
+        });
+    }
+}
 
-            if (args == null || args.Value == "xlsx")
-            {
-                await mydatabaseService.ExportTestcasesToExcel(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "Project",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Testcases");
-            }
-        }
+private async Task LoadTestcase()
+{
+    testcases = await mydatabaseService.GetTestcases(
+        new Query { 
+            Filter = $@"i => i.Screen.Contains(@0) || i.Function.Contains(@0)",
+            FilterParameters = new object[] { search },
+            Expand = "Project,TestcaseTeammembers"
+        });
+    await grid0.Reload();
+}
+
+
+
+     
     }
 }

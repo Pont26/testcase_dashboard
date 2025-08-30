@@ -54,67 +54,67 @@ namespace TestCaseDashboard.Components.Pages
 
         }
 
-        protected async Task AddButtonClick(MouseEventArgs args)
-        {
-            await DialogService.OpenAsync<AddProject>("Add Project", null);
-            await grid0.Reload();
-        }
+      protected async Task AddButtonClick(MouseEventArgs args)
+{
+    var result = await DialogService.OpenAsync<AddProject>("Add Project", null);
 
-        protected async Task EditRow(TestCaseDashboard.Models.mydatabase.Project args)
-        {
-            await DialogService.OpenAsync<EditProject>("Edit Project", new Dictionary<string, object> { {"Id", args.Id} });
-            //await EditRow(args);
-            await grid0.Reload();
-        }
+    if (result != null) // dialog closed with a saved project
+    {
+        projects = await mydatabaseService.GetProjects(new Query 
+        { 
+            Filter = $@"i => i.Projectname.Contains(@0)", 
+            FilterParameters = new object[] { search } 
+        });
+        await grid0.Reload();
+    }
+}
 
-        protected async Task GridDeleteButtonClick(MouseEventArgs args, TestCaseDashboard.Models.mydatabase.Project project)
+protected async Task EditRow(Project args)
+{
+    var result = await DialogService.OpenAsync<EditProject>("Edit Project", 
+        new Dictionary<string, object> { {"Id", args.Id} });
+
+    if (result != null) // dialog closed with updated project
+    {
+        projects = await mydatabaseService.GetProjects(new Query 
+        { 
+            Filter = $@"i => i.Projectname.Contains(@0)", 
+            FilterParameters = new object[] { search } 
+        });
+        await grid0.Reload();
+    }
+}
+
+protected async Task GridDeleteButtonClick(MouseEventArgs args, Project project)
+{
+    try
+    {
+        if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
         {
-            try
+            var deleteResult = await mydatabaseService.DeleteProject(project.Id);
+
+            if (deleteResult != null)
             {
-                if (await DialogService.Confirm("Are you sure you want to delete this record?") == true)
-                {
-                    var deleteResult = await mydatabaseService.DeleteProject(project.Id);
-
-                    if (deleteResult != null)
-                    {
-                        await grid0.Reload();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = $"Error",
-                    Detail = $"Unable to delete Project"
+                projects = await mydatabaseService.GetProjects(new Query 
+                { 
+                    Filter = $@"i => i.Projectname.Contains(@0)", 
+                    FilterParameters = new object[] { search } 
                 });
+                await grid0.Reload();
             }
         }
-
-        protected async Task ExportClick(RadzenSplitButtonItem args)
+    }
+    catch
+    {
+        NotificationService.Notify(new NotificationMessage
         {
-            if (args?.Value == "csv")
-            {
-                await mydatabaseService.ExportProjectsToCSV(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Projects");
-            }
+            Severity = NotificationSeverity.Error,
+            Summary = $"Error",
+            Detail = $"Unable to delete Project"
+        });
+    }
+}
 
-            if (args == null || args.Value == "xlsx")
-            {
-                await mydatabaseService.ExportProjectsToExcel(new Query
-                {
-                    Filter = $@"{(string.IsNullOrEmpty(grid0.Query.Filter)? "true" : grid0.Query.Filter)}",
-                    OrderBy = $"{grid0.Query.OrderBy}",
-                    Expand = "",
-                    Select = string.Join(",", grid0.ColumnsCollection.Where(c => c.GetVisible() && !string.IsNullOrEmpty(c.Property)).Select(c => c.Property.Contains(".") ? c.Property + " as " + c.Property.Replace(".", "") : c.Property))
-                }, "Projects");
-            }
-        }
+      
     }
 }

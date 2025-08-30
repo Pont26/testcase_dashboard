@@ -22,6 +22,7 @@ namespace TestCaseDashboard.Components.Pages
         protected IEnumerable<Teammember> teammembersForCoder;
         protected IEnumerable<KeyValuePair<TestStatus, string>> testStatusList;
 
+        // Selected dropdown values
         protected Guid? selectedCoderId;
         protected Guid? selectedTesterId;
         protected Guid? selectedOwnerId;
@@ -30,101 +31,114 @@ namespace TestCaseDashboard.Components.Pages
         protected TestStatus? selectedTesterStatus;
         protected TestStatus? selectedOwnerStatus;
 
+        // UI flags
         protected bool errorVisible = false;
         protected bool hasChanges = false;
         protected bool canEdit = true;
-        protected bool isLoading = true; // Add this loading flag
+        protected bool isLoading = true;
 
-       protected override async Task OnInitializedAsync()
-{
-    isLoading = true; 
-    try
-    {
-        // Load the testcase (including existing TestcaseTeammembers)
-        testcase = await mydatabaseService.GetTestcaseById(Id);
-
-        // Load dropdown data
-        projectsForProjectid = await mydatabaseService.GetProjects();
-        teammembersForCoder = await mydatabaseService.GetTeammembers();
-        testStatusList = Enum.GetValues(typeof(TestStatus))
-                               .Cast<TestStatus>()
-                               .Select(ts => new KeyValuePair<TestStatus, string>(ts, ts.ToString()))
-                               .ToList();
-
-        if (testcase.TestcaseTeammembers == null)
-            testcase.TestcaseTeammembers = new List<TestcaseTeammember>();
-
-        // Pre-fill dropdowns from existing data
-        var coder = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Coder);
-        selectedCoderId = coder?.Teammemberid;
-        selectedCoderStatus = coder?.TestStatus;
-
-        var tester = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Tester);
-        selectedTesterId = tester?.Teammemberid;
-        selectedTesterStatus = tester?.TestStatus;
-
-        var owner = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Owner);
-        selectedOwnerId = owner?.Teammemberid;
-        selectedOwnerStatus = owner?.TestStatus;
-    }
-    catch (Exception ex)
-    {
-        errorVisible = true;
-        // optionally log ex
-    }
-    finally
-    {
-        isLoading = false;
-        StateHasChanged();
-    }
-}
-
-       protected async Task FormSubmit()
-{
-    try
-    {
-        // Update coder
-        UpdateTeamMemberSelection(Role.Coder, selectedCoderId, selectedCoderStatus);
-
-        // Update tester
-        UpdateTeamMemberSelection(Role.Tester, selectedTesterId, selectedTesterStatus);
-
-        // Update owner
-        UpdateTeamMemberSelection(Role.Owner, selectedOwnerId, selectedOwnerStatus);
-
-        // Update testcase (this also updates TestcaseTeammembers in service)
-        await mydatabaseService.UpdateTestcase(testcase.Id, testcase);
-
-        DialogService.Close(testcase);
-    }
-    catch (DbUpdateConcurrencyException)
-    {
-        hasChanges = true;
-        canEdit = false;
-        errorVisible = true;
-    }
-    catch (Exception)
-    {
-        errorVisible = true;
-    }
-}
-
-private void UpdateTeamMemberSelection(Role role, Guid? memberId, TestStatus? status)
-{
-    var existing = testcase.TestcaseTeammembers
-                           .FirstOrDefault(x => x.Role == role);
-
-    if (existing != null)
-    {
-        if (memberId.HasValue && status.HasValue)
+        protected override async Task OnInitializedAsync()
         {
-            existing.Teammemberid = memberId.Value;
-            existing.TestStatus = status.Value;
+            isLoading = true;
+
+            try
+            {
+                // Load testcase with related teammembers
+                testcase = await mydatabaseService.GetTestcaseById(Id);
+
+                // Load dropdown data
+                projectsForProjectid = await mydatabaseService.GetProjects();
+                teammembersForCoder = await mydatabaseService.GetTeammembers();
+
+                testStatusList = Enum.GetValues(typeof(TestStatus))
+                                     .Cast<TestStatus>()
+                                     .Select(ts => new KeyValuePair<TestStatus, string>(ts, ts.ToString()))
+                                     .ToList();
+
+                // Initialize list if null
+                if (testcase.TestcaseTeammembers == null)
+                    testcase.TestcaseTeammembers = new List<TestcaseTeammember>();
+
+                // Prefill dropdowns from existing assignments
+                var coder = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Coder);
+                selectedCoderId = coder?.Teammemberid;
+                selectedCoderStatus = coder?.TestStatus;
+
+                var tester = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Tester);
+                selectedTesterId = tester?.Teammemberid;
+                selectedTesterStatus = tester?.TestStatus;
+
+                var owner = testcase.TestcaseTeammembers.FirstOrDefault(t => t.Role == Role.Owner);
+                selectedOwnerId = owner?.Teammemberid;
+                selectedOwnerStatus = owner?.TestStatus;
+            }
+            catch (Exception ex)
+            {
+                errorVisible = true;
+                Console.Error.WriteLine($"[EditTestcaseBase] Load error: {ex}");
+            }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged();
+            }
         }
-        // If memberId is null, you could decide to leave as-is or clear values
-    }
-    // else: do nothing (no creation)
-}
+
+        protected async Task FormSubmit()
+        {
+            try
+            {
+                errorVisible = false;
+                testcase.Updatedat = DateTime.UtcNow;
+
+                // Reset coder/tester/owner associations
+                testcase.TestcaseTeammembers = new List<TestcaseTeammember>();
+
+                if (selectedCoderId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedCoderId.Value,
+                        Role = Role.Coder,
+                        TestStatus = selectedCoderStatus ?? TestStatus.Pending
+                    });
+                }
+
+                if (selectedTesterId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedTesterId.Value,
+                        Role = Role.Tester,
+                        TestStatus = selectedTesterStatus ?? TestStatus.Pending
+                    });
+                }
+
+                if (selectedOwnerId.HasValue)
+                {
+                    testcase.TestcaseTeammembers.Add(new TestcaseTeammember
+                    {
+                        Teammemberid = selectedOwnerId.Value,
+                        Role = Role.Owner,
+                        TestStatus = selectedOwnerStatus ?? TestStatus.Pending
+                    });
+                }
+
+                await mydatabaseService.UpdateTestcase(testcase.Id, testcase);
+                DialogService.Close(testcase);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                hasChanges = true;
+                canEdit = false;
+                errorVisible = true;
+            }
+            catch (Exception ex)
+            {
+                errorVisible = true;
+                Console.Error.WriteLine($"[EditTestcaseBase] Save error: {ex}");
+            }
+        }
 
         protected void CancelButtonClick(MouseEventArgs args)
         {

@@ -1,24 +1,26 @@
 @page "/edit-testcase-teammember"
 
 <PageTitle>Edit TestcaseTeammember</PageTitle>
+
 <RadzenRow>
     <RadzenColumn SizeMD="9">
-    <RadzenLabel style="font-weight: bold" Text="Item no longer available." Visible="@(!canEdit)" />
+        <RadzenLabel style="font-weight: bold" Text="Item no longer available." Visible="@(!canEdit)" />
     </RadzenColumn>
     <RadzenColumn SizeMD="3">
-    <RadzenButton ButtonStyle="ButtonStyle.Secondary" style="margin-bottom: 20px" Text="Close" Visible="@(!canEdit)" Click="@CancelButtonClick" />
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" style="margin-bottom: 20px" Text="Close" Visible="@(!canEdit)" Click="@CancelButtonClick" />
     </RadzenColumn>
 </RadzenRow>
 <RadzenRow>
     <RadzenColumn SizeMD="9">
-    <RadzenLabel style="font-weight: bold" Text="Another user has made conflicting changes to one or more of the fields you have modified. Please reload." Visible="@hasChanges" />
+        <RadzenLabel style="font-weight: bold" Text="Another user has made conflicting changes to one or more of the fields you have modified. Please reload." Visible="@hasChanges" />
     </RadzenColumn>
     <RadzenColumn SizeMD="3">
-    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="autorenew" style="margin-bottom: 20px" Text="Reload" Visible="@hasChanges" Click="@ReloadButtonClick" />
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="autorenew" style="margin-bottom: 20px" Text="Reload" Visible="@hasChanges" Click="@ReloadButtonClick" />
     </RadzenColumn>
 </RadzenRow>
 
-    <RadzenColumn SizeMD=12>
+<RadzenRow>
+    <RadzenColumn SizeMD="12">
         <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save TestcaseTeammember</RadzenAlert>
         <RadzenTemplateForm TItem="TestCaseDashboard.Models.mydatabase.TestcaseTeammember" Data="@(testcaseTeammember)" Visible="@(testcaseTeammember != null && canEdit)" Submit="@FormSubmit">
             <RadzenRow style="margin-bottom: 1rem">
@@ -26,25 +28,29 @@
                     <RadzenLabel Text="Teammember" Component="Teammember" style="width: 100%" />
                 </RadzenColumn>
                 <RadzenColumn SizeMD="9">
-                    <RadzenDropDownDataGrid Data="@(teammembersForTeammemberid)" TextProperty="Name" ValueProperty="Id" AllowClear=true
-                         Placeholder="Choose Teammember" style="display: block; width: 100%" @bind-Value="@(testcaseTeammember.Teammemberid)" Name="Teammemberid"
-                           />
+                    <RadzenDropDownDataGrid Data="@(teammembersForTeammemberid)" TextProperty="Name" ValueProperty="Id" AllowClear="true"
+                                            Placeholder="Choose Teammember" style="display: block; width: 100%" @bind-Value="@(testcaseTeammember.Teammemberid)" Name="Teammemberid" />
                 </RadzenColumn>
             </RadzenRow>
+          
             <RadzenRow style="margin-bottom: 1rem">
                 <RadzenColumn SizeMD="3">
-                    <RadzenLabel Text="Testcase" Component="Testcase" style="width: 100%" />
+                    <RadzenLabel Text="Status" Component="Status" style="width: 100%" />
                 </RadzenColumn>
                 <RadzenColumn SizeMD="9">
-                    <RadzenDropDownDataGrid Data="@(testcasesForTestcaseid)" TextProperty="Screen" ValueProperty="Id" AllowClear=true
-                         Placeholder="Choose Testcase" style="display: block; width: 100%" @bind-Value="@(testcaseTeammember.Testcaseid)" Name="Testcaseid"
-                           />
+                    <RadzenDropDown Data="@(testStatusList)"
+                                    TextProperty="Value"
+                                    ValueProperty="Key"
+                                    @bind-Value="selectedCoderStatus"
+                                    AllowClear="true"
+                                    Placeholder="Status"
+                                    style="width:100%" />
                 </RadzenColumn>
             </RadzenRow>
-          <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save" Variant="Variant.Flat" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick"  />
-          </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Save" Variant="Variant.Flat" />
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Variant="Variant.Flat" Click="@CancelButtonClick" />
+            </RadzenStack>
         </RadzenTemplateForm>
     </RadzenColumn>
-
+</RadzenRow>

@@ -74,6 +74,9 @@ namespace TestCaseDashboard.Components.Pages
             canEdit = true;
 
             project = await mydatabaseService.GetProjectById(Id);
+             StateHasChanged();
         }
+
+        
     }
 }
